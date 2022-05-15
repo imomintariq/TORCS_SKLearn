@@ -1,4 +1,5 @@
 from _csv import writer
+from csv import DictWriter
 
 import numpy as np
 import pygame
@@ -77,7 +78,8 @@ class Driver(object):
         self.observation_list.append(obs_list)
 
         self.act.normalize_act()
-        act_list = self.act.get_act(gas=True, gear=True, steer=True)
+        act_list = self.act.get_act(accel=True, brake=True, gas=True, clutch=True, gear=True,
+                steer=True, focus=True, meta=True)
 
         self.action_list.append(act_list)
         self.act.un_normalize_act()
@@ -138,20 +140,32 @@ class Driver(object):
 
     def onShutDown(self):
 
-        with open('CSVFILE.csv', 'a', newline='') as f_object:
-            # Pass the CSV  file object to the writer() function
-            writer_object = writer(f_object)
-            # Result - a writer object
-            # Pass the data in the list as an argument into the writerow() function
+        #print(self.observation_list)
+        #print(self.action_list)
+        field_names = ["angle", "curLapTime", "damage",
+                   "distFromStart", "distRaced", "fuel",
+                   "gear", "lastLapTime", "opponents", "racePos",
+                   "rpm", "speedX", "speedY", "speedZ", "track",
+                   "trackPos", "wheelSpinVel", "z", "focus", "x",
+                   "y", "roll", "pitch", "yaw", "speedGlobalX",
+                   "speedGlobalY", "accel", "brake", "gas", "clutch", "gear",
+                   "steer", "focus", "meta"]
+        with open('CSVFILE.csv', 'a') as f_object:
+            # Pass the file object and a list
+            # of column names to DictWriter()
+            # You will get a object of DictWriter
+            dictwriter_object = DictWriter(f_object, fieldnames=field_names)
 
-            # Close the file object
+            # Pass the dictionary as an argument to the Writerow()
 
             for observation, action_made in zip(self.observation_list, self.action_list):
-                writer_object.writerow(observation, action_made)
+                mydict = dict(observation.items())
+                mydict.update(action_made.items())
+                dictwriter_object.writerow(mydict)
+                print(mydict)
 
-            f_object.close()
 
-        pass
+
 
     def onRestart(self):
         pass

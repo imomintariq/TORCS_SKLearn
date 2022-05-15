@@ -107,24 +107,34 @@ class Action:
     def get_act(self, accel=None, brake=None, gas=None, clutch=None, gear=None,
                 steer=None, focus=None, meta=None):
         """Returns the specified values in a numpy array"""
+        my_dict = {"accel":[], "brake":[], "gas":[], "clutch":[], "gear":[],
+                "steer":[], "focus":[], "meta":[]}
         act = np.array([])
         if accel:
             act = np.append(act, self.accel)
+            my_dict["accel"].append(self.accel)
         if brake:
             act = np.append(act, self.brake)
+            my_dict["brake"].append(self.brake)
         if gas:
             act = np.append(act, self.gas)
+            my_dict["gas"].append(self.gas)
         if clutch:
             act = np.append(act, self.clutch)
+            my_dict["clutch"].append(self.clutch)
         if gear:
             act = np.append(act, self.gear)
+            my_dict["gear"].append(self.gear)
         if steer:
             act = np.append(act, self.steer)
+            my_dict["steer"].append(self.steer)
         if focus:
             act = np.append(act, self.focus)
+            my_dict["focus"].append(self.focus)
         if meta:
             act = np.append(act, self.meta)
-        return act
+            my_dict["meta"].append(self.meta)
+        return my_dict
 
     def set_act(self, act, accel=None, brake=None, gas=None, clutch=None,
                 gear=None, steer=None, focus=None, meta=None):
@@ -236,10 +246,10 @@ class Expert:
         else:
             new_act.brake -= .1
 
-        # if key.space_bar:
-        #     new_act.brake += .1
-        # else:
-        #     new_act.brake -= .1
+        if key.space_bar:
+            new_act.brake += .1
+        else:
+            new_act.brake -= .1
 
         if key.left:
             new_act.steer += .02
@@ -248,36 +258,38 @@ class Expert:
         else:
             new_act.steer = 0
 
-        if self.automatic:
-            rpm = obs.getRpm()
-            gear = obs.getGear()
+        # if self.automatic:
+        #     rpm = obs.getRpm()
+        #     gear = obs.getGear()
+        #
+        #     if self.prev_rpm is None:
+        #         up = True
+        #     else:
+        #         if (self.prev_rpm - rpm) < 0:
+        #             up = True
+        #         else:
+        #             up = False
+        #
+        #     if up and rpm > 7000:
+        #         #self.prev_rpm = rpm
+        #         new_act.gear += 1
+        #
+        #     if not up and rpm < 3000:
+        #         #self.prev_rpm = rpm
+        #         new_act.gear -= 1
+        #
+        # else:
+        if key.shift_up and self.prev_shift_up is False:
+            new_act.gear += 1
+            self.prev_shift_up = True
+        elif key.shift_up is False:
+            self.prev_shift_up = False
 
-            if self.prev_rpm is None:
-                up = True
-            else:
-                if (self.prev_rpm - rpm) < 0:
-                    up = True
-                else:
-                    up = False
-
-            if up and rpm > 8000:
-                new_act.gear += 1
-
-            if not up and rpm < 3000:
-                new_act.gear -= 1
-
-        else:
-            if key.shift_up and self.prev_shift_up is False:
-                new_act.gear += 1
-                self.prev_shift_up = True
-            elif key.shift_up is False:
-                self.prev_shift_up = False
-
-            if key.shift_down and self.prev_shift_down is False:
-                new_act.gear -= 1
-                self.prev_shift_down = True
-            elif key.shift_down is False:
-                self.prev_shift_down = False
+        if key.shift_down and self.prev_shift_down is False:
+            new_act.gear -= 1
+            self.prev_shift_down = True
+        elif key.shift_down is False:
+            self.prev_shift_down = False
 
         # Make sure the values are valid
         new_act.accel = self.__clip(new_act.accel, 0, 1)
