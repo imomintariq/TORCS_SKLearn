@@ -60,31 +60,34 @@ class Driver(object):
         return self.parser.stringify({'init': self.angles})
 
     def drive(self, msg):
-        self.state.setFromMsg(msg)
+
         # telemetry.getTelemetry(self.state)
 
         # self.interface.get_key_state()
 
-        self.act = self.expert.get_expert_act(self.act, self.state)
+        self.act = self.expert.get_expert_act(self.act)
         self.step(self.act)
-        print(f"Expert Act = {self.act.accel}")
+
+        #print(f"Expert Act = {self.act.accel}")
 
         # Normalizing
-        self.state.normalize_obs()
+        #self.state.normalize_obs()
+        self.state.setFromMsg(msg)
+
         obs_list = self.state.get_obs(angle=True, gear=True, rpm=True,
                                       speedX=True, speedY=True, track=True,
                                       trackPos=True, wheelSpinVel=True)
 
         self.observation_list.append(obs_list)
 
-        self.act.normalize_act()
+        #self.act.normalize_act()
         act_list = self.act.get_act(accel=True, brake=True, gas=True, clutch=True, gear=True,
                 steer=True, focus=True, meta=True)
 
         self.action_list.append(act_list)
-        self.act.un_normalize_act()
+        #self.act.un_normalize_act()
         # self.gear()
-        self.step(self.act)
+        #self.step(self.act)
 
         return self.control.toMsg()
 
@@ -162,7 +165,7 @@ class Driver(object):
                 mydict = dict(observation.items())
                 mydict.update(action_made.items())
                 dictwriter_object.writerow(mydict)
-                print(mydict)
+                #print(mydict)
 
 
 

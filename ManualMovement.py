@@ -227,7 +227,7 @@ class Expert:
         else:
             return v
 
-    def get_expert_act(self, act, obs):
+    def get_expert_act(self, act):
         """Get the action that the expert would preform"""
 
         new_act = Action()
@@ -242,11 +242,6 @@ class Expert:
             new_act.accel -= .1
 
         if key.down:
-            new_act.brake += .1
-        else:
-            new_act.brake -= .1
-
-        if key.space_bar:
             new_act.brake += .1
         else:
             new_act.brake -= .1
