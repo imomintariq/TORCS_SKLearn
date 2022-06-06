@@ -9,6 +9,13 @@ class CarState(object):
 
     def __init__(self):
         '''Constructor'''
+        self.speedGlobalY = None
+        self.speedGlobalX = None
+        self.yaw = None
+        self.pitch = None
+        self.roll = None
+        self.y = None
+        self.x = None
         self.parser = msgParser.MsgParser()
         self.sensors = None
         self.angle = None
@@ -280,35 +287,18 @@ class CarState(object):
     def getZ(self):
         return self.z
 
-    def normalize_obs(self):
-        """Normalizes the values of the observation to between 0 and 1"""
-        PI = 3.14159265359
-        self.angle = (self.angle + PI) / (2 * PI)
-        self.damage = self.damage / 10000
-        self.focus = [sensor / 200 for sensor in self.focus]
-        self.fuel = self.fuel / 100
-        self.gear = (self.gear + 1) / 7
-        self.opponents = [opponent / 200 for opponent in self.opponents]
-        self.rpm = self.rpm / 10000
-        self.speedX = (self.speedX + 300) / 600
-        self.speedY = (self.speedX + 300) / 600
-        self.speedZ = (self.speedZ + 300) / 600
-        self.track = [(sensor / 200) + 0.005 for sensor in self.track]
-        self.trackPos = (self.trackPos + 10) / 20
-        self.wheelSpinVel = [(spin + 300) / 600 for spin in self.wheelSpinVel]
-
     def get_obs(self, angle=None, curLapTime=None, damage=None,
                 distFromStart=None, distRaced=None, fuel=None,
-                gear=None, lastLapTime=None, opponents=None, racePos=None,
+                gear_1=None, lastLapTime=None, opponents=None, racePos=None,
                 rpm=None, speedX=None, speedY=None, speedZ=None, track=None,
-                trackPos=None, wheelSpinVel=None, z=None, focus=None, x=None,
+                trackPos=None, wheelSpinVel=None, z=None, focus_1=None, x=None,
                 y=None, roll=None, pitch=None, yaw=None, speedGlobalX=None,
                 speedGlobalY=None):
         my_dict = {"angle": [], "curLapTime": [], "damage": [],
                    "distFromStart": [], "distRaced": [], "fuel": [],
-                   "gear": [], "lastLapTime": [], "opponents": [], "racePos": [],
+                   "gear_1": [], "lastLapTime": [], "opponents": [], "racePos": [],
                    "rpm": [], "speedX": [], "speedY": [], "speedZ": [], "track": [],
-                   "trackPos": [], "wheelSpinVel": [], "z": [], "focus": [], "x": [],
+                   "trackPos": [], "wheelSpinVel": [], "z": [], "focus_1": [], "x": [],
                    "y": [], "roll": [], "pitch": [], "yaw": [], "speedGlobalX": [],
                    "speedGlobalY": []};
         """Return the specified values in a numpy array"""
@@ -331,9 +321,9 @@ class CarState(object):
         if fuel:
             obs = np.append(obs, self.fuel)
             my_dict["fuel"].append(self.fuel)
-        if gear:
+        if gear_1:
             obs = np.append(obs, self.gear)
-            my_dict["gear"].append(self.gear)
+            my_dict["gear_1"].append(self.gear)
         if lastLapTime:
             obs = np.append(obs, self.lastLapTime)
             my_dict["lastLapTime"].append(self.lastLapTime)
@@ -367,9 +357,9 @@ class CarState(object):
         if z:
             obs = np.append(obs, self.z)
             my_dict["z"].append(self.z)
-        if focus:
+        if focus_1:
             obs = np.append(obs, self.focus)
-            my_dict["focus"].append(self.focus)
+            my_dict["focus_1"].append(self.focus)
         if x:
             obs = np.append(obs, self.x)
             my_dict["x"].append(self.x)
@@ -392,3 +382,140 @@ class CarState(object):
             obs = np.append(obs, self.speedGlobalY)
             my_dict["speedGlobalY"].append(self.speedGlobalY)
         return my_dict
+
+    def get_obs_for_prediction(self, angle=None, curLapTime=None, damage=None,
+                distFromStart=None, distRaced=None, fuel=None,
+                gear_1=None, lastLapTime=None, opponents=None, racePos=None,
+                rpm=None, speedX=None, speedY=None, speedZ=None, track=None,
+                trackPos=None, wheelSpinVel=None, z=None, focus_1=None, x=None,
+                y=None, roll=None, pitch=None, yaw=None, speedGlobalX=None,
+                speedGlobalY=None):
+
+        obs = [[]]
+        if angle:
+            if self.angle is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.angle)
+        if curLapTime:
+            if self.curLapTime is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.curLapTime)
+        if damage:
+            if self.damage is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.damage)
+        if distFromStart:
+            if self.distFromStart is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.distFromStart)
+        if distRaced:
+            if self.distRaced is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.distRaced)
+        if fuel:
+            if self.fuel is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.fuel)
+        if gear_1:
+            if self.gear is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.gear)
+        if lastLapTime:
+            if self.lastLapTime is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.lastLapTime)
+        # if opponents:
+        #     obs = np.append(obs, self.opponents)
+        if racePos:
+            if self.racePos is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.racePos)
+        if rpm:
+            if self.rpm is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.rpm)
+        if speedX:
+            if self.speedX is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.speedX)
+        if speedY:
+            if self.speedY is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.speedY)
+        if speedZ:
+            if self.speedZ is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.speedZ)
+        # if track:
+        #     obs = np.append(obs, self.track)
+        if trackPos:
+            if self.trackPos is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.trackPos)
+        # if wheelSpinVel:
+        #     obs = np.append(obs, self.wheelSpinVel)
+        if z:
+            if self.z is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.z)
+        # if focus_1:
+        #     obs = np.append(obs, self.focus)
+        if x:
+            if self.x is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.x)
+        if y:
+            if self.y is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.y)
+        if roll:
+            if self.roll is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.roll)
+        if pitch:
+            if self.pitch is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.pitch)
+        if yaw:
+            if self.yaw is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.yaw)
+        if speedGlobalX:
+            if self.speedGlobalX is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.speedGlobalX)
+        if speedGlobalY:
+            if self.speedGlobalY is None:
+                obs[0].append(0)
+            else:
+                obs[0].append(self.speedGlobalY)
+        if track:
+            obs[0].extend(self.track)
+        if wheelSpinVel:
+            obs[0].extend(self.wheelSpinVel)
+        if focus_1:
+            obs[0].extend(self.focus)
+        #if opponents:
+        #    obs.extend(self.opponents)
+        return obs

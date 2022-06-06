@@ -69,25 +69,6 @@ class Interface:
 
         return self.pressed
 
-    # def display_act(self, act):
-    #     """Display the current action on the interface"""
-    #     accel = "ACCEL: " + str(act.accel)
-    #     brake = "BRAKE: " + str(act.brake)
-    #     gear = "GEAR: " + str(act.gear)
-    #     steer = "STEER: " + str(act.steer)
-    #
-    #     self.screen.fill((0, 0, 0))
-    #
-    #     accel, rect_accel = self.font.render(accel, (255, 255, 255))
-    #     brake, rect_brake = self.font.render(brake, (255, 255, 255))
-    #     gear, rect_gear = self.font.render(gear, (255, 255, 255))
-    #     steer, rect_steer = self.font.render(steer, (255, 255, 255))
-    #
-    #     self.screen.blit(accel, (10, 10))
-    #     self.screen.blit(brake, (10, rect_brake[1] + 20))
-    #     self.screen.blit(gear, (10, 2 * rect_gear[1] + 30))
-    #     self.screen.blit(steer, (10, 3 * rect_steer[1] + 40))
-
 
 import numpy as np
 
@@ -104,11 +85,11 @@ class Action:
         self.focus = [-90, -45, 0, 45, 90]
         self.meta = 0
 
-    def get_act(self, accel=None, brake=None, gas=None, clutch=None, gear=None,
-                steer=None, focus=None, meta=None):
+    def get_act(self, accel=None, brake=None, gas=None, clutch=None, gear_2=None,
+                steer=None, focus_2=None, meta=None):
         """Returns the specified values in a numpy array"""
-        my_dict = {"accel":[], "brake":[], "gas":[], "clutch":[], "gear":[],
-                "steer":[], "focus":[], "meta":[]}
+        my_dict = {"accel":[], "brake":[], "gas":[], "clutch":[], "gear_2":[],
+                "steer":[], "focus_2":[], "meta":[]}
         act = np.array([])
         if accel:
             act = np.append(act, self.accel)
@@ -122,68 +103,30 @@ class Action:
         if clutch:
             act = np.append(act, self.clutch)
             my_dict["clutch"].append(self.clutch)
-        if gear:
+        if gear_2:
             act = np.append(act, self.gear)
-            my_dict["gear"].append(self.gear)
+            my_dict["gear_2"].append(self.gear)
         if steer:
             act = np.append(act, self.steer)
             my_dict["steer"].append(self.steer)
-        if focus:
+        if focus_2:
             act = np.append(act, self.focus)
-            my_dict["focus"].append(self.focus)
+            my_dict["focus_2"].append(self.focus)
         if meta:
             act = np.append(act, self.meta)
             my_dict["meta"].append(self.meta)
         return my_dict
 
-    def set_act(self, act, accel=None, brake=None, gas=None, clutch=None,
-                gear=None, steer=None, focus=None, meta=None):
+    def set_act(self, act):
         """Set the values specified with a numpy array"""
-        i = 0
-        if accel:
-            self.accel = act[0][i]
-            i += 1
-        if brake:
-            self.brake = act[0][i]
-            i += 1
-        if gas:
-            self.gas = act[0][i]
-            i += 1
-        if clutch:
-            self.clutch = act[0][i]
-            i += 1
-        if gear:
-            self.gear = act[0][i]
-            i += 1
-        if steer:
-            self.steer = act[0][i]
-            i += 1
-        if focus:
-            self.focus = act[0][i]
-            i += 1
-        if meta:
-            self.meta = act[0][i]
-            i += 1
-
-    def normalize_act(self):
-        """Normalize action values to be between 0 and 1"""
-        self.gas = (self.accel / 2) - (self.brake / 2) + 0.5
-        self.gear = (self.gear + 1) / 7
-        self.steer = (self.steer + 1) / 2
-
-    def un_normalize_act(self):
-        """Un-normalize action values to be betwen their original values"""
-        if self.gas == 0.5:
-            self.accel = 0
-            self.accel = 0
-        if self.gas > 0.5:
-            self.accel = (self.gas - 0.5) * 2
-            self.brake = 0
-        elif self.gas < 0.5:
-            self.brake = (0.5 - self.gas) * 2
-            self.accel = 0
-        self.gear = int(round((self.gear * 7) - 1))
-        self.steer = (self.steer * 2) - 1
+        self.accel = act[0][0]
+        self.steer = act[0][1]
+        self.brake = act[0][2]
+        self.gear = act[0][3]
+        self.gas = act[0][4]
+        self.clutch = act[0][5]
+        self.focus = [act[0][6],act[0][7],act[0][8],act[0][9],act[0][10]]
+        self.meta = act[0][11]
 
     def copy(self, act):
         """Copy an existing action to this"""
@@ -253,27 +196,7 @@ class Expert:
         else:
             new_act.steer = 0
 
-        # if self.automatic:
-        #     rpm = obs.getRpm()
-        #     gear = obs.getGear()
-        #
-        #     if self.prev_rpm is None:
-        #         up = True
-        #     else:
-        #         if (self.prev_rpm - rpm) < 0:
-        #             up = True
-        #         else:
-        #             up = False
-        #
-        #     if up and rpm > 7000:
-        #         #self.prev_rpm = rpm
-        #         new_act.gear += 1
-        #
-        #     if not up and rpm < 3000:
-        #         #self.prev_rpm = rpm
-        #         new_act.gear -= 1
-        #
-        # else:
+
         if key.shift_up and self.prev_shift_up is False:
             new_act.gear += 1
             self.prev_shift_up = True

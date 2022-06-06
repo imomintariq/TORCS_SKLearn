@@ -7,6 +7,7 @@ import pygame
 import ManualMovement
 import msgParser
 import carState
+import pickle
 import carControl
 import telemetry
 
@@ -15,6 +16,11 @@ sensor_count = 29
 
 # Number of availiable actions
 action_count = 3
+
+pickled_model = pickle.load(open('model3.pkl', 'rb'))
+manual_keys = True
+
+
 class Driver(object):
     '''
     A driver object for the SCRC
@@ -64,32 +70,60 @@ class Driver(object):
         # telemetry.getTelemetry(self.state)
 
         # self.interface.get_key_state()
+        if manual_keys:
+            self.act = self.expert.get_expert_act(self.act)
+            self.step(self.act)
 
-        self.act = self.expert.get_expert_act(self.act)
-        self.step(self.act)
+            # print(f"Expert Act = {self.act.accel}")
 
-        #print(f"Expert Act = {self.act.accel}")
+            # Normalizing
+            # self.state.normalize_obs()
+            self.state.setFromMsg(msg)
 
-        # Normalizing
-        #self.state.normalize_obs()
-        self.state.setFromMsg(msg)
+            obs_list = self.state.get_obs(angle=True, curLapTime=True, damage=True,
+                                          distFromStart=True, distRaced=True, fuel=True,
+                                          gear_1=True, lastLapTime=True, opponents=True, racePos=True,
+                                          rpm=True, speedX=True, speedY=True, speedZ=True, track=True,
+                                          trackPos=True, wheelSpinVel=True, z=True, focus_1=True, x=True,
+                                          y=True, roll=True, pitch=True, yaw=True, speedGlobalX=True,
+                                          speedGlobalY=True)
 
-        obs_list = self.state.get_obs(angle=True, gear=True, rpm=True,
-                                      speedX=True, speedY=True, track=True,
-                                      trackPos=True, wheelSpinVel=True)
+            self.observation_list.append(obs_list)
 
-        self.observation_list.append(obs_list)
+            # self.act.normalize_act()
+            act_list = self.act.get_act(accel=True, brake=True, gas=True, clutch=True, gear_2=True,
+                                        steer=True, focus_2=True, meta=True)
 
-        #self.act.normalize_act()
-        act_list = self.act.get_act(accel=True, brake=True, gas=True, clutch=True, gear=True,
-                steer=True, focus=True, meta=True)
+            self.action_list.append(act_list)
+            # self.act.un_normalize_act()
+            # self.gear()
+            # self.step(self.act)
 
-        self.action_list.append(act_list)
-        #self.act.un_normalize_act()
-        # self.gear()
-        #self.step(self.act)
+            return self.control.toMsg()
+        else:
+            # self.act = self.expert.get_expert_act(self.act)
+            # self.step(self.act)
 
-        return self.control.toMsg()
+            # print(f"Expert Act = {self.act.accel}")
+
+            # Normalizing
+            # self.state.normalize_obs()
+            self.state.setFromMsg(msg)
+
+            obs_list = self.state.get_obs_for_prediction(angle=True, curLapTime=True, damage=True,
+                                                         distFromStart=True, distRaced=True, fuel=True,
+                                                         gear_1=True, lastLapTime=True, opponents=True, racePos=True,
+                                                         rpm=True, speedX=True, speedY=True, speedZ=True, track=True,
+                                                         trackPos=True, wheelSpinVel=True, z=True, focus_1=True, x=True,
+                                                         y=True, roll=True, pitch=True, yaw=True, speedGlobalX=True,
+                                                         speedGlobalY=True)
+            print(obs_list)
+            #obs_2d = [obs_list]
+            act_list = pickled_model.predict(obs_list)
+            print(act_list)
+            self.act.set_act(act_list)
+            self.step(self.act)
+            return self.control.toMsg()
 
     def step(self, act):
         self.control.setAccel(act.accel)
@@ -143,16 +177,16 @@ class Driver(object):
 
     def onShutDown(self):
 
-        #print(self.observation_list)
-        #print(self.action_list)
+        # print(self.observation_list)
+        # print(self.action_list)
         field_names = ["angle", "curLapTime", "damage",
-                   "distFromStart", "distRaced", "fuel",
-                   "gear", "lastLapTime", "opponents", "racePos",
-                   "rpm", "speedX", "speedY", "speedZ", "track",
-                   "trackPos", "wheelSpinVel", "z", "focus", "x",
-                   "y", "roll", "pitch", "yaw", "speedGlobalX",
-                   "speedGlobalY", "accel", "brake", "gas", "clutch", "gear",
-                   "steer", "focus", "meta"]
+                       "distFromStart", "distRaced", "fuel",
+                       "gear_1", "lastLapTime", "opponents", "racePos",
+                       "rpm", "speedX", "speedY", "speedZ", "track",
+                       "trackPos", "wheelSpinVel", "z", "focus_1", "x",
+                       "y", "roll", "pitch", "yaw", "speedGlobalX",
+                       "speedGlobalY", "accel", "brake", "gas", "clutch", "gear_2",
+                       "steer", "focus_2", "meta"]
         with open('CSVFILE.csv', 'a') as f_object:
             # Pass the file object and a list
             # of column names to DictWriter()
@@ -165,10 +199,7 @@ class Driver(object):
                 mydict = dict(observation.items())
                 mydict.update(action_made.items())
                 dictwriter_object.writerow(mydict)
-                #print(mydict)
-
-
-
+                # print(mydict)
 
     def onRestart(self):
         pass
